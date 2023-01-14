@@ -2,7 +2,7 @@ import React, { createContext, useContext } from "react";
 import { useEffect } from "react";
 import { useState } from "react";
 import { io } from "socket.io-client";
-import { Category, GameContext, PlayerNumContext, RoomCreated} from "../../App"; 
+import { Category, Entered, GameContext, PlayerNumContext, RoomCreated} from "../../App"; 
 
 const socket = io.connect("http://localhost:8080"); 
 // var isinRoom = false;
@@ -16,7 +16,8 @@ export default function Home(props) {
     const {playerNumber, setPlayerNumber} = useContext(PlayerNumContext);
     const {category, setCategory } = useContext(Category);
     // const {roomName, setRoomName} = useContext(RoomName);
-    const {roomCreated, setCreated} = useContext(RoomCreated)
+    const {roomCreated, setCreated} = useContext(RoomCreated);
+    const {entered, setEntered} = useContext(Entered);
 
      socket.on('init',(data)=>{
         setPlayerNumber(data);
@@ -34,6 +35,8 @@ export default function Home(props) {
         setInRoom(true);
     })
     socket.on('enter_game',(data)=>{
+        setEntered(true);
+        startGameSequence();
         console.log("The choosen entity is "+ data.entityName);
     })
 
@@ -42,7 +45,9 @@ export default function Home(props) {
     const [isJoining, setJoining] = useState(false);
 
     
-
+    const startGameSequence=()=>{
+        
+    }
     const handleRoomNameChange = (e)=>{
         const val = e.target.value;
         setRoomName(val);
@@ -114,6 +119,23 @@ export default function Home(props) {
             <input type="text" onChange={handleNameChange}/>
             <button  onClick={handleSubmit}>Start</button>
             
+        </div>
+    )
+}
+
+export function Game2(props) {
+    return (
+        <div>
+            <h1>Waiting for Player one to choose a {props.categ}</h1>
+            
+        </div>
+    )
+}
+
+export function Game1_1(props) {
+    return (
+        <div>
+            <h1>entered the game!</h1>
         </div>
     )
 }

@@ -2,7 +2,7 @@
 import './App.css';
 import { io } from "socket.io-client";
 import { createContext, useContext, useEffect, useState } from 'react';
-import Home, { Game } from "./pages/home/Home";
+import Home, { Game, Game1_1, Game2 } from "./pages/home/Home";
 // import GameContext from './gameContext';
 import {
   BrowserRouter as Router,
@@ -14,13 +14,14 @@ import {
 import { customAlphabet } from 'nanoid'
 import { redirect } from 'next/dist/server/api-utils';
 
-import Game2 from './pages/Game2';
+
 const nanoid = customAlphabet('1234567890abcdef', 5)
 
 const GameContext = createContext();
 const PlayerNumContext = createContext();
 const Category = createContext();
 const RoomCreated = createContext();
+const Entered = createContext();
 
 // const socket = io.connect("http://localhost:8080");
 
@@ -29,6 +30,7 @@ function App() {
   const [playerNumber, setPlayerNumber] = useState();
   const [category, setCategory ] = useState('');
   const [roomCreated, setCreated] = useState('');
+  const [entered, setEntered] = useState(false);
   // const [isInRoom,setInRoom] = useState(false)
   // socket.on('start_game',()=>{
   //   console.log("The game has started for you!");
@@ -45,12 +47,15 @@ function App() {
     <PlayerNumContext.Provider value = {{playerNumber, setPlayerNumber}}>
     <Category.Provider value = {{category, setCategory}}>
     <RoomCreated.Provider value = {{roomCreated, setCreated}}>
+    <Entered.Provider value = {{entered, setEntered}}>
     <div>
     {!isInRoom && <Home/>}
     {isInRoom && playerNumber===1 &&  <Game cat = {category} room={roomCreated}/>}
-    {isInRoom && playerNumber===2 &&  <Game2 categ = {category}/>}
+    {!entered && isInRoom && playerNumber===2 &&  <Game2 categ = {category}/>}
+    {entered && playerNumber===2 && <Game1_1/>}
       
     </div>
+    </Entered.Provider>
     </RoomCreated.Provider>
     </Category.Provider>
     </PlayerNumContext.Provider>
@@ -61,4 +66,4 @@ function App() {
 }
 
 export default App;
-export {GameContext, PlayerNumContext, Category, RoomCreated}
+export {GameContext, PlayerNumContext, Category, RoomCreated,Entered}
