@@ -27,9 +27,9 @@ export default function Home(props) {
     socket.on('room_full',()=>{
         console.log("Room is full!");
     })
-    socket.on('start_game',()=>{
+    socket.on('start_game',(data)=>{
         console.log("The game has started for you!");
-        
+        setCategory(data.joinCategory)
         setInRoom(true);
 
         
@@ -61,8 +61,8 @@ export default function Home(props) {
     var cate = null;
     const  CreateRoom=()=>{
         cate = displayCategories();
-        setCategory(cate);
-        socket.emit("create_room",{roomCreated,category});
+        // setCategory(cate);
+        socket.emit("create_room",{roomCreated,cate});
     }
     // var joined = false;
     // const JoinRoom=()=>{
@@ -71,7 +71,8 @@ export default function Home(props) {
     //     socket.emit('join_room,',{code});
     // }
     const JoinRoom=()=>{
-        setCategory(cate);
+
+        
         socket.emit('join_room',{roomName})
     }
 

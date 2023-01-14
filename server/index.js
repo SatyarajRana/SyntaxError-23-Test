@@ -47,35 +47,50 @@ io.on('connection',(socket)=>{
     //     }
     // })
     socket.on('join_room',async (data)=>{
-        console.log("Here done");
+        
         const room = io.sockets.adapter.rooms.get(data.roomName);
         var clientCount = 0;
-        
+        var joinCategory;
         if(room){
             room.forEach((a)=>{
                 clientCount = clientCount+1;
             })
+            var count = 0;
+            room.forEach(element => {
+            if (count === 1) {
+               joinCategory = element;
+            }
+            count = count+1;
+        });
+
         }
         if (clientCount === 0) {
             socket.emit('unknown_game');
-        }else if(clientCount>1){
+        }else if(clientCount>2){
             socket.emit('room_full');
         }else{
             clientRooms[socket.id]=data.roomName;
             await socket.join(data.roomName);
             socket.number=2;
             socket.emit('init',2);
-            io.in(data.roomName).emit('start_game');
+            io.in(data.roomName).emit('start_game',{joinCategory});
+            
         }
         
         
     })
-    socket.on('create_room',(data)=>{
+    socket.on('create_room',async (data)=>{
         clientRooms[socket.id] = data.roomCreated;
-
+        
         socket.emit('game_code', data.roomCreated);
         // state[data.roomCreated] = gameState();
-        socket.join(data.roomCreated);
+        await socket.join(data.roomCreated);
+        const theRoom = io.sockets.adapter.rooms.get(data.roomCreated);
+        
+        theRoom.add(data.cate);
+       
+        
+
         socket.number = 1;
         socket.emit('init',1);
         // const room = io.sockets.adapter.rooms[data.roomCreated];
