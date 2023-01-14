@@ -2,7 +2,7 @@ import React, { createContext, useContext } from "react";
 import { useEffect } from "react";
 import { useState } from "react";
 import { io } from "socket.io-client";
-import { Category, GameContext, PlayerNumContext } from "../../App"; 
+import { Category, GameContext, PlayerNumContext, RoomCreated} from "../../App"; 
 
 const socket = io.connect("http://localhost:8080"); 
 // var isinRoom = false;
@@ -12,10 +12,11 @@ export default function Home(props) {
 
     // const { isInRoom, setInRoom } = useState(false);
     // const [isInRoom, setInRoom] = useState(false);
-    const { setInRoom, isInRoom } = useContext(GameContext);
+    const { isInRoom, setInRoom  } = useContext(GameContext);
     const {playerNumber, setPlayerNumber} = useContext(PlayerNumContext);
     const {category, setCategory } = useContext(Category);
-
+    // const {roomName, setRoomName} = useContext(RoomName);
+    const {roomCreated, setCreated} = useContext(RoomCreated)
 
      socket.on('init',(data)=>{
         setPlayerNumber(data);
@@ -31,13 +32,13 @@ export default function Home(props) {
         console.log("The game has started for you!");
         setCategory(data.joinCategory)
         setInRoom(true);
-
-        
-
+    })
+    socket.on('enter_game',(data)=>{
+        console.log("The choosen entity is "+ data.entityName);
     })
 
     const [roomName, setRoomName] = useState("");
-    const [roomCreated, setCreated] = useState('');
+
     const [isJoining, setJoining] = useState(false);
 
     
@@ -61,18 +62,10 @@ export default function Home(props) {
     var cate = null;
     const  CreateRoom=()=>{
         cate = displayCategories();
-        // setCategory(cate);
         socket.emit("create_room",{roomCreated,cate});
     }
-    // var joined = false;
-    // const JoinRoom=()=>{
-    //     console.log("here.....");
-    //     const code = roomName;
-    //     socket.emit('join_room,',{code});
-    // }
+    
     const JoinRoom=()=>{
-
-        
         socket.emit('join_room',{roomName})
     }
 
@@ -80,10 +73,7 @@ export default function Home(props) {
         socket.on("join_error",(data)=>{
             alert(data.err)
         });
-        // socket.on("room_joined",()=>{
-        //     console.log("Room joined set to true");
-        //     // joined = true;
-        // });
+        
     },[socket])
     
 
@@ -103,3 +93,27 @@ export default function Home(props) {
       
     );
   }
+  export function Game(props) {
+
+    const [Name, setName] = useState('');
+    const room = props.room;
+    const handleSubmit=()=>{
+        socket.emit('name_submit',{Name, room});
+        console.log("Submitted");
+    }
+
+    const handleNameChange=(e)=>{
+        setName(e.target.value);
+    }
+    return (
+        <div>
+            <h1>This is game</h1>
+            <h2>{room}</h2>
+            
+            <h2>Enter a {props.cat}</h2>
+            <input type="text" onChange={handleNameChange}/>
+            <button  onClick={handleSubmit}>Start</button>
+            
+        </div>
+    )
+}
