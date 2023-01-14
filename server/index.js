@@ -5,28 +5,9 @@ const cors = require("cors")
 const {Server} = require('socket.io')
 const mongoose = require('mongoose');
 const { type } = require('os');
-const {gameState} = require('./game')
 
-// mongoose.connect(
-//     'mongodb+srv://admin-satyaraj:ranasatyarajsinh@cluster0.7odqe.mongodb.net/?retryWrites=true&w=majority',
-//     {
-//       useNewUrlParser: true,
-//       useUnifiedTopology: true,
-//       retryWrites: true,
-//       writeConcern: "majority",
-//       socketTimeoutMS: 0,
-//       keepAlive: true,
-//       connectTimeoutMS: 0,
-//       // authMechanism: "SCRAM-SHA-1"
-//     },
-//     (err) => {
-//       if (err != null) {
-//         console.log("Can't connect to the DB", err);
-//       } else {
-//         console.log("Connected to the DB successfully!");
-//       }
-//     }
-//   );
+
+
 app.use(cors());
 const server = http.createServer(app);
 
@@ -93,7 +74,7 @@ io.on('connection',(socket)=>{
         clientRooms[socket.id] = data.roomCreated;
 
         socket.emit('game_code', data.roomCreated);
-        state[data.roomCreated] = gameState();
+        // state[data.roomCreated] = gameState();
         socket.join(data.roomCreated);
         socket.number = 1;
         socket.emit('init',1);
