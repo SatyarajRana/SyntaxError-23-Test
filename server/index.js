@@ -86,6 +86,7 @@ io.on('connection',(socket)=>{
         const entityName = data.Name;
         console.log(data.room);
         io.in(data.room).emit('enter_game',{entityName})
+        
     })
 })
 

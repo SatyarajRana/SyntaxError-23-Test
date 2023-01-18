@@ -2,7 +2,7 @@
 import './App.css';
 import { io } from "socket.io-client";
 import { createContext, useContext, useEffect, useState } from 'react';
-import Home, { Game, Game1_1, Game2 } from "./pages/home/Home";
+import Home, { Game, Game2_1, Game2, Game1_2 } from "./pages/home/Home";
 // import GameContext from './gameContext';
 import {
   BrowserRouter as Router,
@@ -22,6 +22,7 @@ const PlayerNumContext = createContext();
 const Category = createContext();
 const RoomCreated = createContext();
 const Entered = createContext();
+const Entity = createContext();
 
 // const socket = io.connect("http://localhost:8080");
 
@@ -31,6 +32,7 @@ function App() {
   const [category, setCategory ] = useState('');
   const [roomCreated, setCreated] = useState('');
   const [entered, setEntered] = useState(false);
+  const [entity,setEntity] = useState('');
   // const [isInRoom,setInRoom] = useState(false)
   // socket.on('start_game',()=>{
   //   console.log("The game has started for you!");
@@ -48,13 +50,16 @@ function App() {
     <Category.Provider value = {{category, setCategory}}>
     <RoomCreated.Provider value = {{roomCreated, setCreated}}>
     <Entered.Provider value = {{entered, setEntered}}>
+    <Entity.Provider value = {{entity,setEntity}}>
     <div>
     {!isInRoom && <Home/>}
-    {isInRoom && playerNumber===1 &&  <Game cat = {category} room={roomCreated}/>}
+    {!entered && isInRoom && playerNumber===1 &&  <Game cat = {category} room={roomCreated}/>}
     {!entered && isInRoom && playerNumber===2 &&  <Game2 categ = {category}/>}
-    {entered && playerNumber===2 && <Game1_1/>}
+    {entered && playerNumber===2 && <Game2_1 ent= {entity}/>}
+    {entered && playerNumber===1 && <Game1_2  />}
       
     </div>
+    </Entity.Provider>
     </Entered.Provider>
     </RoomCreated.Provider>
     </Category.Provider>
@@ -66,4 +71,4 @@ function App() {
 }
 
 export default App;
-export {GameContext, PlayerNumContext, Category, RoomCreated,Entered}
+export {GameContext, PlayerNumContext, Category, RoomCreated,Entered, Entity}

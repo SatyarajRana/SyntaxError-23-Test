@@ -2,7 +2,7 @@ import React, { createContext, useContext } from "react";
 import { useEffect } from "react";
 import { useState } from "react";
 import { io } from "socket.io-client";
-import { Category, Entered, GameContext, PlayerNumContext, RoomCreated} from "../../App"; 
+import { Category, Entered, GameContext, PlayerNumContext, RoomCreated,Entity} from "../../App"; 
 
 const socket = io.connect("http://localhost:8080"); 
 // var isinRoom = false;
@@ -18,7 +18,8 @@ export default function Home(props) {
     // const {roomName, setRoomName} = useContext(RoomName);
     const {roomCreated, setCreated} = useContext(RoomCreated);
     const {entered, setEntered} = useContext(Entered);
-
+    const {entity,setEntity} = useContext(Entity);
+ 
      socket.on('init',(data)=>{
         setPlayerNumber(data);
         console.log(data);
@@ -36,6 +37,7 @@ export default function Home(props) {
     })
     socket.on('enter_game',(data)=>{
         setEntered(true);
+        setEntity(data.entityName);
         startGameSequence();
         console.log("The choosen entity is "+ data.entityName);
     })
@@ -43,6 +45,7 @@ export default function Home(props) {
     const [roomName, setRoomName] = useState("");
 
     const [isJoining, setJoining] = useState(false);
+    
 
     
     const startGameSequence=()=>{
@@ -73,6 +76,8 @@ export default function Home(props) {
     const JoinRoom=()=>{
         socket.emit('join_room',{roomName})
     }
+
+    
 
     useEffect(()=>{
         socket.on("join_error",(data)=>{
@@ -132,10 +137,36 @@ export function Game2(props) {
     )
 }
 
-export function Game1_1(props) {
+export function Game2_1(props) {
+
+    const [nameGuess, setNameGuess] = useState('');
+    
+    const handleNameGuess=(e)=>{
+        setNameGuess(e.target.value);
+    }
+
+    const nameGuessSubmit=()=>{
+        console.log("Here is what you entered..." + nameGuess);
+        console.log("Here is the answer..." + props.ent);
+    }
+    const getHint=()=>{
+        console.log("Here is your hint!!");
+    }
     return (
         <div>
-            <h1>entered the game!</h1>
+            <input type="text" onChange={handleNameGuess}/>
+            <button onClick={nameGuessSubmit}>Check</button>
+            <button onClick={getHint}>Hint</button>
+        </div>
+    )
+}
+
+export function Game1_2(props){
+
+    
+    return (
+        <div>
+            <h1>Waiting for the player to guess!</h1>
         </div>
     )
 }
