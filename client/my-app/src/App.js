@@ -29,46 +29,36 @@ const Entity = createContext();
 function App() {
   const [isInRoom, setInRoom] = useState(false);
   const [playerNumber, setPlayerNumber] = useState();
-  const [category, setCategory ] = useState('');
+  const [category, setCategory] = useState('');
   const [roomCreated, setCreated] = useState('');
   const [entered, setEntered] = useState(false);
-  const [entity,setEntity] = useState('');
-  // const [isInRoom,setInRoom] = useState(false)
-  // socket.on('start_game',()=>{
-  //   console.log("The game has started for you!");
-  //   setInRoom(true);
-  
-  // })
-  // const gameContextValue={
-  //   isInRoom,
-  //   setInRoom
-  // }
+  const [entity, setEntity] = useState('');
 
   return (
-    <GameContext.Provider value={{isInRoom,setInRoom}}>
-    <PlayerNumContext.Provider value = {{playerNumber, setPlayerNumber}}>
-    <Category.Provider value = {{category, setCategory}}>
-    <RoomCreated.Provider value = {{roomCreated, setCreated}}>
-    <Entered.Provider value = {{entered, setEntered}}>
-    <Entity.Provider value = {{entity,setEntity}}>
-    <div>
-    {!isInRoom && <Home/>}
-    {!entered && isInRoom && playerNumber===1 &&  <Game cat = {category} room={roomCreated}/>}
-    {!entered && isInRoom && playerNumber===2 &&  <Game2 categ = {category}/>}
-    {entered && playerNumber===2 && <Game2_1 ent= {entity}/>}
-    {entered && playerNumber===1 && <Game1_2  />}
-      
-    </div>
-    </Entity.Provider>
-    </Entered.Provider>
-    </RoomCreated.Provider>
-    </Category.Provider>
-    </PlayerNumContext.Provider>
+    <GameContext.Provider value={{ isInRoom, setInRoom }}>
+      <PlayerNumContext.Provider value={{ playerNumber, setPlayerNumber }}>
+        <Category.Provider value={{ category, setCategory }}>
+          <RoomCreated.Provider value={{ roomCreated, setCreated }}>
+            <Entered.Provider value={{ entered, setEntered }}>
+              <Entity.Provider value={{ entity, setEntity }}>
+                <div>
+                  {!isInRoom && <Home />}
+                  {!entered && isInRoom && playerNumber === 1 && <Game cat={category} room={roomCreated} />}
+                  {!entered && isInRoom && playerNumber === 2 && <Game2 categ={category} />}
+                  {entered && playerNumber === 2 && <Game2_1 ent={entity} />}
+                  {entered && playerNumber === 1 && <Game1_2 />}
+
+                </div>
+              </Entity.Provider>
+            </Entered.Provider>
+          </RoomCreated.Provider>
+        </Category.Provider>
+      </PlayerNumContext.Provider>
     </GameContext.Provider>
-    
+
     // {}
   );
 }
 
 export default App;
-export {GameContext, PlayerNumContext, Category, RoomCreated,Entered, Entity}
+export { GameContext, PlayerNumContext, Category, RoomCreated, Entered, Entity }
