@@ -152,6 +152,8 @@ export function Game2_1(props) {
         console.log("Here is what you entered..." + nameGuess);
         console.log("Here is the answer..." + props.ent);
     }
+    const [hints,setHints] = useState([]);
+    let hintsTest=[];
     const getHint = () => {
         axios({
             method: "post",
@@ -161,14 +163,23 @@ export function Game2_1(props) {
             }
 
         }).then((response) => {
-            console.log(response.data);
+            
+            // console.log(response);
+            let hints = response.data;
+            console.log(hints);
         });
     }
+    
     return (
         <div>
             <input type="text" onChange={handleNameGuess} />
             <button onClick={nameGuessSubmit}>Check</button>
             <button onClick={getHint}>Hint</button>
+            <div>
+                {hints.map((hint)=>(
+                    <p>hint</p>
+                ))}
+            </div>
         </div>
     )
 }
