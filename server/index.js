@@ -13,6 +13,7 @@ const bodyParser = require("body-parser");
 
 // const port = 8080;
 
+const { askGPT } = require("./services/openai");
 app.use(cors());
 app.use(bodyParser.json());
 
@@ -123,12 +124,13 @@ io.on("connection", (socket) => {
     rooms[roomCode] = {
       creator: socket.id,
       guesser: [],
-      place: "Paris", // Replace with your logic to randomly select a place
+      place: "",
+      winner: "", // Replace with your logic to randomly select a place
     };
 
     // Join the room
     socket.join(roomCode);
-
+    socket.emit("updateRooms", rooms[roomCode]);
     // Emit event to the creator that the room has been created
     socket.emit("roomCreated", roomCode);
   });
@@ -136,23 +138,56 @@ io.on("connection", (socket) => {
   // Handle joining a room
   socket.on("joinRoom", (roomCode) => {
     const room = rooms[roomCode];
-    console.log("room", room);
+
     // Check if the room exists and the guesser slot is available
     if (room) {
       // Join the room as the guesser
       socket.join(roomCode);
+
       room.guesser.push(socket.id);
 
       // Emit event to the guesser that they have successfully joined the room
       socket.emit("roomJoined", roomCode);
+      io.to(room.creator).emit("updateRooms", room);
+      room.guesser.forEach((guesser) => {
+        io.to(guesser).emit("updateRooms", room);
+      });
     } else {
       // Emit event to the guesser that joining the room failed
       socket.emit("joinRoomFailed");
     }
   });
 
+  socket.on("startGame", (roomCode) => {
+    const room = rooms[roomCode];
+
+    // Check if the room exists, the creator has joined, and the guesser has joined
+    if (room && room.creator === socket.id) {
+      // Emit event to both players that the game has started
+
+      // get info about all joined sockets in the room
+      console.log(`starting game in the room ${roomCode}`);
+      socket.emit("gameStarted", room);
+
+      room.guesser.forEach((guesser) => {
+        io.to(guesser).emit("gameStarted", room);
+      });
+    }
+  });
+
+  socket.on("addEntity", (roomCode, entity) => {
+    const room = rooms[roomCode];
+    room.place = entity;
+
+    socket.emit("updateRooms", room);
+
+    room.guesser.forEach((guesser) => {
+      io.to(guesser).emit("updateRooms", room);
+    });
+  });
+
   // Handle place guessing
-  socket.on("guessPlace", (roomCode, guess) => {
+  socket.on("guessPlace", async (roomCode, guess) => {
     const room = rooms[roomCode];
 
     // Check if the room exists and the guesser has joined
@@ -160,13 +195,39 @@ io.on("connection", (socket) => {
       // Check if the guess is correct
       if (guess.toLowerCase() === room.place.toLowerCase()) {
         // Emit event to both players that the guesser has won
-        io.to(roomCode).emit("gameWon", socket.id);
+
+        room.guesser.forEach((guesser) => {
+          io.to(guesser).emit("gameWon", socket.id);
+        });
+        io.to(room.creator).emit("gameWon", socket.id);
       } else {
-        // Emit event to both players with a hint (from OpenAI API)
-        const hint = "A hint about the place"; // Replace with your OpenAI API integration
-        io.to(roomCode).emit("hint", hint);
+        const message = `${guess} is not correct. Try again!`;
+        socket.emit("wrongGuess", message);
       }
     }
+  });
+  socket.on("getHint", async (roomCode, question) => {
+    const room = rooms[roomCode];
+
+    const hints = await askGPT(room.place);
+
+    const hintList = hints.split(/\d+\./);
+
+    // Remove any leading/trailing whitespaces from each hint
+    const trimmedHints = hintList.map((hint) => hint.trim());
+
+    // Store each hint in separate strings
+    const hint1 = trimmedHints[1];
+    const hint2 = trimmedHints[2];
+    const hint3 = trimmedHints[3];
+
+    // const hint1 = "hint1";
+    // const hint2 = "hint2";
+    // const hint3 = "hint3";
+
+    room.guesser.forEach((guesser) => {
+      io.to(guesser).emit("hint", hint1, hint2, hint3);
+    });
   });
 
   // Handle disconnection

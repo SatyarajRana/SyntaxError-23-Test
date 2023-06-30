@@ -1,6 +1,6 @@
-// import { set } from "mongoose";
 import React, { useState, useEffect } from "react";
 import io from "socket.io-client";
+import "./styles.css";
 
 const socket = io("http://localhost:8080"); // Replace with your server URL
 
@@ -8,8 +8,17 @@ const App = () => {
   const [roomCode, setRoomCode] = useState();
   const [joinCode, setJoinCode] = useState("");
   const [message, setMessage] = useState("");
-  const [hint, setHint] = useState("");
+  const [message2, setMessage2] = useState("");
+  const [hints, setHint] = useState([]);
+  const [hintsDisplay, setHintsDisplay] = useState([]);
+  const [gameStarted, setGameStarted] = useState(false);
   const [gameWon, setGameWon] = useState(false);
+  const [room, setRoom] = useState({
+    creator: "",
+    guessers: [],
+    place: "",
+    winner: "",
+  });
 
   useEffect(() => {
     // Event listeners for server events
@@ -20,6 +29,7 @@ const App = () => {
     });
 
     socket.on("roomJoined", (roomCode) => {
+      setMessage("");
       setRoomCode(roomCode);
     });
 
@@ -27,8 +37,26 @@ const App = () => {
       setMessage("Failed to join the room. Please try again.");
     });
 
-    socket.on("hint", (hint) => {
-      setHint(hint);
+    socket.on("gameStarted", (room) => {
+      console.log(`Game started in the room ${room.place}`);
+      setGameStarted(true);
+    });
+
+    socket.on("updateRooms", (updatedRoom) => {
+      setRoom({
+        creator: updatedRoom.creator,
+        guessers: updatedRoom.guesser,
+        place: updatedRoom.place,
+        winner: updatedRoom.winner,
+      });
+
+      console.log(`Here is the updated place: ${updatedRoom.place}`);
+      // console.log(room[roomCode]);
+    });
+
+    socket.on("hint", (hint1, hint2, hint3) => {
+      setHint([hint1, hint2, hint3]);
+      console.log(`Here are the hints: ${hint1}, ${hint2}, ${hint3}`);
     });
 
     socket.on("gameWon", (playerId) => {
@@ -37,6 +65,10 @@ const App = () => {
       } else {
         setMessage("Opponent has won!");
       }
+    });
+
+    socket.on("wrongGuess", (message) => {
+      setMessage2(message);
     });
 
     return () => {
@@ -60,14 +92,36 @@ const App = () => {
     socket.emit("joinRoom", joinCode);
   };
 
+  const handleStartGame = () => {
+    socket.emit("startGame", roomCode);
+  };
+
   const handleGuessPlace = (event) => {
     event.preventDefault();
     const guess = event.target.elements.guess.value;
     socket.emit("guessPlace", roomCode, guess);
   };
+  const handleEntityAddition = (event) => {
+    event.preventDefault();
+    const entity = event.target.elements[0].value;
+
+    socket.emit("addEntity", roomCode, entity);
+    if (entity) {
+      setGameStarted(true);
+    }
+    socket.emit("getHint", roomCode);
+  };
+
+  const handleGetHint = async (index) => {
+    if (hintsDisplay.includes(hints[index])) {
+      return;
+    }
+    setHintsDisplay([...hintsDisplay, hints[index]]);
+    setMessage2("");
+  };
 
   return (
-    <div>
+    <div className="container">
       {!roomCode ? (
         <div>
           <h1>Create a Room</h1>
@@ -85,20 +139,66 @@ const App = () => {
             onChange={(e) => setJoinCode(e.target.value)}
           />
           <button onClick={handleJoinRoom}>Join</button>
-          <p>{message}</p>
+          <p className="message">{message}</p>
         </div>
       ) : (
         <div>
           <h2>Room Code: {roomCode}</h2>
           {!gameWon ? (
-            <form onSubmit={handleGuessPlace}>
-              <input type="text" name="guess" />
-              <button type="submit">Guess</button>
-              {hint && <p>Hint: {hint}</p>}
-              <p>{message}</p>
-            </form>
+            <div>
+              {!message && socket.id === room?.creator && (
+                <div>
+                  <button
+                    onClick={handleStartGame}
+                    disabled={room?.guessers.length === 0}
+                  >
+                    Start Game
+                  </button>
+                  <p>Players Joined: {room?.guessers.length + 1}</p>
+                </div>
+              )}
+              {gameStarted && socket.id === room?.creator && (
+                <form onSubmit={handleEntityAddition}>
+                  <input type="text" />
+                  <button type="submit">Add Place</button>
+                </form>
+              )}
+              {!gameStarted && socket.id !== room?.creator && (
+                <p>Waiting for the creator to start the game...</p>
+              )}
+              {gameStarted &&
+                socket.id !== room?.creator &&
+                room.place.length === 0 && (
+                  <p>Waiting for the creator to add a place...</p>
+                )}
+
+              {message && <p className="message">{message}</p>}
+              {!message &&
+                gameStarted &&
+                socket.id !== room?.creator &&
+                room.place.length > 0 && (
+                  <div>
+                    <form onSubmit={handleGuessPlace}>
+                      <input type="text" name="guess" />
+                      <button type="submit">Guess</button>
+
+                      <p className="message">{message}</p>
+                    </form>
+                    <button onClick={() => handleGetHint(0)}>Hint1</button>
+                    <button onClick={() => handleGetHint(1)}>Hint2</button>
+                    <button onClick={() => handleGetHint(2)}>Hint3</button>
+                  </div>
+                )}
+              {hintsDisplay.map((hint, index) => (
+                <p className="hint" key={index}>
+                  {hint}
+                </p>
+              ))}
+
+              {message2 && <p className="message">{message2}</p>}
+            </div>
           ) : (
-            <h2>Congratulations! You won!</h2>
+            <h2 className="winner-message">Congratulations! You won!</h2>
           )}
         </div>
       )}

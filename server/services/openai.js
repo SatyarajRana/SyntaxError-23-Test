@@ -3,8 +3,8 @@ const OpenAI = require("openai");
 const { Configuration, OpenAIApi } = OpenAI;
 
 const configuration = new Configuration({
-  organization: "org-eJWihzDvP36dnXXjG9Fi9I3h",
-  apiKey: "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",
+  organization: "org-19MoLVIen7EdhvLcQjPlYQeo",
+  apiKey: "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",
 });
 
 const openai = new OpenAIApi(configuration);
@@ -26,13 +26,14 @@ async function getHints(Question) {
     ...openAiConfig,
   });
 
-  var separateLines = ans.data.choices[0].text.split(/\r?\n|\r|\n/g);
+  var separateLines = ans.data.choices[0].text;
 
   return separateLines;
 }
 
 async function askGPT(question) {
   const answer = await getHints(question);
+
   //Here answer is an array containing hints at index = 2,4,and 6
   return answer;
 }
