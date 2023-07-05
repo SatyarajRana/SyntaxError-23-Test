@@ -9,6 +9,10 @@ body {
   max-width: 600px;
   margin: 0 auto;
   padding: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 70vh;
 }
 
 h1 {
@@ -30,10 +34,11 @@ input[type="text"] {
 
 button {
   padding: 10px 20px;
-  background-color: #4caf50;
+  background-color: #36d7b7;
   color: #fff;
   border: none;
   cursor: pointer;
+  margin: 0 0 10px 0;
 }
 
 button:disabled {
@@ -62,4 +67,11 @@ p {
 .winner-message {
   color: green;
   font-weight: bold;
+}
+
+.spinner-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 80vh;
 }

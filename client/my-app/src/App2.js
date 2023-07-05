@@ -1,7 +1,19 @@
 import React, { useState, useEffect } from "react";
 import io from "socket.io-client";
 import "./styles.css";
+import { CSSProperties } from "react";
+import ClimbingBoxLoader from "react-spinners/ClimbingBoxLoader";
 
+// const override: CSSProperties = {
+//   display: "block",
+//   margin: "0 auto",
+//   borderColor: "red",
+// };
+const override = {
+  display: "block",
+  margin: "5% auto",
+  borderColor: "red",
+};
 const socket = io("http://localhost:8080"); // Replace with your server URL
 
 const App = () => {
@@ -13,6 +25,8 @@ const App = () => {
   const [hintsDisplay, setHintsDisplay] = useState([]);
   const [gameStarted, setGameStarted] = useState(false);
   const [gameWon, setGameWon] = useState(false);
+
+  const [showLoadingSpinner, setShowLoadingSpinner] = useState(false);
   const [room, setRoom] = useState({
     creator: "",
     guessers: [],
@@ -84,15 +98,27 @@ const App = () => {
   const handleCreateRoom = () => {
     var randomNum = Math.floor(Math.random() * 9000) + 1000;
 
+    setShowLoadingSpinner(true);
+    setTimeout(() => {
+      setShowLoadingSpinner(false);
+    }, 3000);
     socket.emit("createRoom", randomNum);
   };
 
   const handleJoinRoom = () => {
-    console.log("Joining room" + joinCode);
+    setShowLoadingSpinner(true);
+    setTimeout(() => {
+      setShowLoadingSpinner(false);
+    }, 3000);
+
     socket.emit("joinRoom", joinCode);
   };
 
   const handleStartGame = () => {
+    setShowLoadingSpinner(true);
+    setTimeout(() => {
+      setShowLoadingSpinner(false);
+    }, 1000);
     socket.emit("startGame", roomCode);
   };
 
@@ -102,6 +128,10 @@ const App = () => {
     socket.emit("guessPlace", roomCode, guess);
   };
   const handleEntityAddition = (event) => {
+    setShowLoadingSpinner(true);
+    setTimeout(() => {
+      setShowLoadingSpinner(false);
+    }, 3000);
     event.preventDefault();
     const entity = event.target.elements[0].value;
 
@@ -120,16 +150,16 @@ const App = () => {
     setMessage2("");
   };
 
-  return (
+  return showLoadingSpinner ? (
+    <div className="spinner-container">
+      <ClimbingBoxLoader color="#36d7b7" cssOverride={override} />
+    </div>
+  ) : (
     <div className="container">
       {!roomCode ? (
         <div>
           <h1>Create a Room</h1>
-          {/* <input
-            type="text"
-            value={roomCode}
-            onChange={(e) => setRoomCode(e.target.value)}
-          /> */}
+
           <button onClick={handleCreateRoom}>Create</button>
           <hr />
           <h1>Join a Room</h1>
@@ -146,7 +176,7 @@ const App = () => {
           <h2>Room Code: {roomCode}</h2>
           {!gameWon ? (
             <div>
-              {!message && socket.id === room?.creator && (
+              {!gameStarted && !message && socket.id === room?.creator && (
                 <div>
                   <button
                     onClick={handleStartGame}
@@ -154,6 +184,7 @@ const App = () => {
                   >
                     Start Game
                   </button>
+
                   <p>Players Joined: {room?.guessers.length + 1}</p>
                 </div>
               )}
@@ -207,5 +238,3 @@ const App = () => {
 };
 
 export default App;
-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
-org-19MoLVIen7EdhvLcQjPlYQeo
