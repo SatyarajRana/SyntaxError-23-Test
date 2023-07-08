@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import io from "socket.io-client";
+// import io from "props.socket.io-client";
 import "./styles.css";
 import { CSSProperties } from "react";
 import ClimbingBoxLoader from "react-spinners/ClimbingBoxLoader";
@@ -14,9 +14,9 @@ const override = {
   margin: "5% auto",
   borderColor: "red",
 };
-const socket = io("http://localhost:8080"); // Replace with your server URL
+// const props socket.= io("http://localhost:8080"); // Replace with your server URL
 
-const App = () => {
+const App = (props) => {
   const [roomCode, setRoomCode] = useState();
   const [joinCode, setJoinCode] = useState("");
   const [message, setMessage] = useState("");
@@ -24,7 +24,8 @@ const App = () => {
   const [hints, setHint] = useState([]);
   const [hintsDisplay, setHintsDisplay] = useState([]);
   const [gameStarted, setGameStarted] = useState(false);
-  const [gameWon, setGameWon] = useState(false);
+  // const [(room.place.length !== 0), setPlaceAdded] = useState(false);
+  const [gameOver, setGameOver] = useState(false);
 
   const [showLoadingSpinner, setShowLoadingSpinner] = useState(false);
   const [room, setRoom] = useState({
@@ -32,114 +33,117 @@ const App = () => {
     guessers: [],
     place: "",
     winner: "",
+    currentTurn: "",
+    currentTurnIndex: 0,
   });
 
   useEffect(() => {
     // Event listeners for server events
 
-    socket.on("roomCreated", (roomCode) => {
+    props.socket.on("roomCreated", (roomCode) => {
       console.log("roomCreated");
       setRoomCode(roomCode);
     });
 
-    socket.on("roomJoined", (roomCode) => {
-      setMessage("");
+    props.socket.on("roomJoined", (roomCode) => {
+      console.log(`Joining room with code ${roomCode}`);
       setRoomCode(roomCode);
     });
 
-    socket.on("joinRoomFailed", () => {
+    props.socket.on("joinRoomFailed", () => {
       setMessage("Failed to join the room. Please try again.");
     });
 
-    socket.on("gameStarted", (room) => {
-      console.log(`Game started in the room ${room.place}`);
+    props.socket.on("gameStarted", (room) => {
       setGameStarted(true);
     });
 
-    socket.on("updateRooms", (updatedRoom) => {
+    props.socket.on("updateRooms", (updatedRoom) => {
       setRoom({
         creator: updatedRoom.creator,
         guessers: updatedRoom.guesser,
         place: updatedRoom.place,
         winner: updatedRoom.winner,
+        currentTurn: updatedRoom.currentTurn,
+        currentTurnIndex: updatedRoom.currentTurnIndex,
       });
 
       console.log(`Here is the updated place: ${updatedRoom.place}`);
       // console.log(room[roomCode]);
     });
 
-    socket.on("hint", (hint1, hint2, hint3) => {
+    props.socket.on("hint", (hint1, hint2, hint3) => {
       setHint([hint1, hint2, hint3]);
       console.log(`Here are the hints: ${hint1}, ${hint2}, ${hint3}`);
     });
 
-    socket.on("gameWon", (playerId) => {
-      if (socket.id === playerId) {
-        setGameWon(true);
-      } else {
-        setMessage("Opponent has won!");
-      }
+    props.socket.on("turnOver", (playerId, roomCode) => {
+      // setPlaceAdded(false);
+      showSpinner(1);
+      console.log("nextTurn emitted");
+      props.socket.emit("nextTurn", roomCode);
     });
 
-    socket.on("wrongGuess", (message) => {
+    props.socket.on("wrongGuess", (message) => {
       setMessage2(message);
+    });
+
+    props.socket.on("gameOver", (winner) => {
+      console.log(`Game over. The winner is ${winner}`);
+      setGameOver(true);
     });
 
     return () => {
       // Clean up event listeners
-      //   socket.off("roomCreated");
-      //   socket.off("roomJoined");
-      //   socket.off("joinRoomFailed");
-      //   socket.off("hint");
-      //   socket.off("gameWon");
+      props.socket.off("roomCreated");
+      props.socket.off("roomJoined");
+      props.socket.off("joinRoomFailed");
+      props.socket.off("hint");
+      props.socket.off("gameOver");
+      props.socket.off("gameStarted");
+      props.socket.off("updateRooms");
+      props.socket.off("turnOver");
+      props.socket.off("wrongGuess");
     };
   }, []);
 
-  const handleCreateRoom = () => {
-    var randomNum = Math.floor(Math.random() * 9000) + 1000;
-
+  function showSpinner(time) {
     setShowLoadingSpinner(true);
     setTimeout(() => {
       setShowLoadingSpinner(false);
-    }, 3000);
-    socket.emit("createRoom", randomNum);
+    }, time * 1000);
+  }
+
+  const handleCreateRoom = () => {
+    showSpinner(3);
+    var randomNum = Math.floor(Math.random() * 9000) + 1000;
+
+    props.socket.emit("createRoom", randomNum);
   };
 
   const handleJoinRoom = () => {
-    setShowLoadingSpinner(true);
-    setTimeout(() => {
-      setShowLoadingSpinner(false);
-    }, 3000);
-
-    socket.emit("joinRoom", joinCode);
+    showSpinner(3);
+    props.socket.emit("joinRoom", joinCode);
   };
 
   const handleStartGame = () => {
-    setShowLoadingSpinner(true);
-    setTimeout(() => {
-      setShowLoadingSpinner(false);
-    }, 1000);
-    socket.emit("startGame", roomCode);
+    showSpinner(1);
+    props.socket.emit("startGame", roomCode);
   };
 
   const handleGuessPlace = (event) => {
     event.preventDefault();
     const guess = event.target.elements.guess.value;
-    socket.emit("guessPlace", roomCode, guess);
+    props.socket.emit("guessPlace", roomCode, guess);
   };
   const handleEntityAddition = (event) => {
-    setShowLoadingSpinner(true);
-    setTimeout(() => {
-      setShowLoadingSpinner(false);
-    }, 3000);
+    showSpinner(1);
     event.preventDefault();
     const entity = event.target.elements[0].value;
 
-    socket.emit("addEntity", roomCode, entity);
-    if (entity) {
-      setGameStarted(true);
-    }
-    socket.emit("getHint", roomCode);
+    props.socket.emit("addEntity", roomCode, entity);
+
+    props.socket.emit("getHint", roomCode);
   };
 
   const handleGetHint = async (index) => {
@@ -157,6 +161,7 @@ const App = () => {
   ) : (
     <div className="container">
       {!roomCode ? (
+        // The div that can create a Room or join a Room
         <div>
           <h1>Create a Room</h1>
 
@@ -169,14 +174,14 @@ const App = () => {
             onChange={(e) => setJoinCode(e.target.value)}
           />
           <button onClick={handleJoinRoom}>Join</button>
-          <p className="message">{message}</p>
         </div>
       ) : (
+        // The div that can start the game, add entity, and guess the place
         <div>
           <h2>Room Code: {roomCode}</h2>
-          {!gameWon ? (
+          {!gameOver ? (
             <div>
-              {!gameStarted && !message && socket.id === room?.creator && (
+              {!gameStarted && props.socket.id === room?.creator && (
                 <div>
                   <button
                     onClick={handleStartGame}
@@ -184,30 +189,29 @@ const App = () => {
                   >
                     Start Game
                   </button>
-
-                  <p>Players Joined: {room?.guessers.length + 1}</p>
                 </div>
               )}
-              {gameStarted && socket.id === room?.creator && (
-                <form onSubmit={handleEntityAddition}>
-                  <input type="text" />
-                  <button type="submit">Add Place</button>
-                </form>
-              )}
-              {!gameStarted && socket.id !== room?.creator && (
+              {!gameStarted && props.socket.id !== room?.creator && (
                 <p>Waiting for the creator to start the game...</p>
               )}
               {gameStarted &&
-                socket.id !== room?.creator &&
-                room.place.length === 0 && (
-                  <p>Waiting for the creator to add a place...</p>
+                !(room.place.length !== 0) &&
+                props.socket.id === room?.currentTurn && (
+                  <form onSubmit={handleEntityAddition}>
+                    <input type="text" />
+                    <button type="submit">Add Place</button>
+                  </form>
                 )}
 
-              {message && <p className="message">{message}</p>}
-              {!message &&
-                gameStarted &&
-                socket.id !== room?.creator &&
-                room.place.length > 0 && (
+              {gameStarted &&
+                !(room.place.length !== 0) &&
+                props.socket.id !== room?.creator && (
+                  <p>Waiting for the player to add a place...</p>
+                )}
+
+              {gameStarted &&
+                room.place.length !== 0 &&
+                props.socket.id !== room?.currentTurn && (
                   <div>
                     <form onSubmit={handleGuessPlace}>
                       <input type="text" name="guess" />
@@ -218,18 +222,22 @@ const App = () => {
                     <button onClick={() => handleGetHint(0)}>Hint1</button>
                     <button onClick={() => handleGetHint(1)}>Hint2</button>
                     <button onClick={() => handleGetHint(2)}>Hint3</button>
+                    {hintsDisplay.map((hint, index) => (
+                      <p className="hint" key={index}>
+                        {hint}
+                      </p>
+                    ))}
                   </div>
                 )}
-              {hintsDisplay.map((hint, index) => (
-                <p className="hint" key={index}>
-                  {hint}
-                </p>
-              ))}
-
-              {message2 && <p className="message">{message2}</p>}
+              {gameStarted &&
+                room.place.length !== 0 &&
+                props.socket.id === room?.currentTurn && (
+                  <p>Waiting for the players to guess the place...</p>
+                )}
+              <p>Players Joined: {room?.guessers.length}</p>
             </div>
           ) : (
-            <h2 className="winner-message">Congratulations! You won!</h2>
+            <h2 className="leaderboard">Leaderboard</h2>
           )}
         </div>
       )}
