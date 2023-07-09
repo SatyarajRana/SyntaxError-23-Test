@@ -35,23 +35,22 @@ const App = (props) => {
     winner: "",
     currentTurn: "",
     currentTurnIndex: 0,
+    started: false,
   });
 
   useEffect(() => {
     // Event listeners for server events
 
     props.socket.on("roomCreated", (roomCode) => {
-      console.log("roomCreated");
       setRoomCode(roomCode);
     });
 
     props.socket.on("roomJoined", (roomCode) => {
-      console.log(`Joining room with code ${roomCode}`);
       setRoomCode(roomCode);
     });
 
-    props.socket.on("joinRoomFailed", () => {
-      setMessage("Failed to join the room. Please try again.");
+    props.socket.on("joinRoomFailed", (message) => {
+      setMessage(message);
     });
 
     props.socket.on("gameStarted", (room) => {
@@ -66,26 +65,24 @@ const App = (props) => {
         winner: updatedRoom.winner,
         currentTurn: updatedRoom.currentTurn,
         currentTurnIndex: updatedRoom.currentTurnIndex,
+        started: updatedRoom.started,
       });
 
-      console.log(`Here is the updated place: ${updatedRoom.place}`);
       // console.log(room[roomCode]);
     });
 
     props.socket.on("hint", (hint1, hint2, hint3) => {
       setHint([hint1, hint2, hint3]);
-      console.log(`Here are the hints: ${hint1}, ${hint2}, ${hint3}`);
     });
 
     props.socket.on("turnOver", (playerId, roomCode) => {
-      // setPlaceAdded(false);
       showSpinner(1);
-      console.log("nextTurn emitted");
+
       props.socket.emit("nextTurn", roomCode);
     });
 
     props.socket.on("wrongGuess", (message) => {
-      setMessage2(message);
+      setMessage(message);
     });
 
     props.socket.on("gameOver", (winner) => {
@@ -174,6 +171,7 @@ const App = (props) => {
             onChange={(e) => setJoinCode(e.target.value)}
           />
           <button onClick={handleJoinRoom}>Join</button>
+          <p className="message">{message}</p>
         </div>
       ) : (
         // The div that can start the game, add entity, and guess the place

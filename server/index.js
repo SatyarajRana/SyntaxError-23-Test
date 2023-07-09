@@ -44,6 +44,7 @@ io.on("connection", (socket) => {
       winner: "",
       currentTurn: "",
       currentTurnIndex: 0,
+      started: false,
     };
     // room = rooms[roomCode];
 
@@ -61,19 +62,26 @@ io.on("connection", (socket) => {
 
     // Check if the room exists and the guesser slot is available
     if (room) {
-      // Join the room as the guesser
-      socket.join(roomCode);
-      room.guesser.push(socket.id);
+      if (!room.started) {
+        // Join the room as the guesser
 
-      // Emit event to the guesser that they have successfully joined the room
-      socket.emit("roomJoined", roomCode);
+        socket.join(roomCode);
+        room.guesser.push(socket.id);
 
-      room.guesser.forEach((guesser) => {
-        io.to(guesser).emit("updateRooms", room);
-      });
+        // Emit event to the guesser that they have successfully joined the room
+        socket.emit("roomJoined", roomCode);
+
+        room.guesser.forEach((guesser) => {
+          io.to(guesser).emit("updateRooms", room);
+        });
+      } else if (room.started) {
+        const message = "Game has already started!";
+        socket.emit("joinRoomFailed", message);
+      }
     } else {
       // Emit event to the guesser that joining the room failed
-      socket.emit("joinRoomFailed");
+      const message = "Room does not exist!";
+      socket.emit("joinRoomFailed", message);
     }
   });
 
@@ -87,6 +95,8 @@ io.on("connection", (socket) => {
       // get info about all joined sockets in the room
 
       // Updating the current turn
+
+      room.started = true;
       room.currentTurn = room.guesser[room.currentTurnIndex];
 
       room.guesser.forEach((guesser) => {
