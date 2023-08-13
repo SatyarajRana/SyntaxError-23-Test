@@ -1,9 +1,10 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import { BrowserRouter } from "react-router-dom";
+import { BrowserRouter, Route, Routes, useParams } from "react-router-dom";
 import io from "socket.io-client";
 
-import App2 from "./App2";
+import App2 from "./Components/App2";
+import HomePage from "./Components/Home";
 import reportWebVitals from "./reportWebVitals";
 
 const socket = io("http://localhost:8080");
@@ -11,7 +12,10 @@ const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
   <React.StrictMode>
     <BrowserRouter>
-      <App2 socket={socket} />
+      <Routes>
+        <Route path="/" element={<HomePage />} />
+        <Route path="/game/:username" element={<App2 socket={socket} />} />
+      </Routes>
     </BrowserRouter>
   </React.StrictMode>
 );

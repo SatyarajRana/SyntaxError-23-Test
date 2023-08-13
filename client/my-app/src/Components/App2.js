@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
+import { useParams } from "react-router-dom";
 // import io from "props.socket.io-client";
-import "./styles.css";
+import "../styles.css";
 import { CSSProperties } from "react";
 import ClimbingBoxLoader from "react-spinners/ClimbingBoxLoader";
 
@@ -17,6 +18,7 @@ const override = {
 // const props socket.= io("http://localhost:8080"); // Replace with your server URL
 
 const App = (props) => {
+  const { username } = useParams();
   const [roomCode, setRoomCode] = useState();
   const [joinCode, setJoinCode] = useState("");
   const [message, setMessage] = useState("");
